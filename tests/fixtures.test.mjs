@@ -154,34 +154,48 @@ test("fixture inventory meets initial conformance floor", () => {
 test("fixture directories maintain hygiene", () => {
   for (const group of ["valid", "invalid"]) {
     for (const fixturePath of fixtureDirectories(group)) {
+      const fixtureName = path.relative(path.join(root, "fixtures"), fixturePath);
       const readmePath = path.join(fixturePath, "README.md");
       const manifestPath = path.join(fixturePath, "cellfence.manifest.json");
       const expectedPath = path.join(fixturePath, "expected-result.json");
 
-      assert.ok(fs.existsSync(readmePath), `Missing README.md in: ${fixturePath}`);
-      assert.ok(fs.existsSync(manifestPath), `Missing cellfence.manifest.json in: ${fixturePath}`);
-      assert.ok(fs.existsSync(expectedPath), `Missing expected-result.json in: ${fixturePath}`);
+      assert.ok(
+        fs.existsSync(readmePath),
+        `Fixture ${fixtureName} is missing README.md (${readmePath})`,
+      );
+      assert.ok(
+        fs.existsSync(manifestPath),
+        `Fixture ${fixtureName} is missing cellfence.manifest.json (${manifestPath})`,
+      );
+      assert.ok(
+        fs.existsSync(expectedPath),
+        `Fixture ${fixtureName} is missing expected-result.json (${expectedPath})`,
+      );
 
       const expected = JSON.parse(fs.readFileSync(expectedPath, "utf8"));
       assert.equal(
         typeof expected.ok,
         "boolean",
-        `expected-result.json lacks a boolean 'ok' field in: ${fixturePath}`
+        `Fixture ${fixtureName} expected-result.json must define boolean 'ok'`,
       );
       assert.ok(
         Array.isArray(expected.errorRuleIds),
-        `expected-result.json lacks an errorRuleIds array in: ${fixturePath}`
+        `Fixture ${fixtureName} expected-result.json must define errorRuleIds as an array`,
       );
       assert.ok(
         Array.isArray(expected.warningRuleIds),
-        `expected-result.json lacks a warningRuleIds array in: ${fixturePath}`
+        `Fixture ${fixtureName} expected-result.json must define warningRuleIds as an array`,
+      );
+      assert.ok(
+        expected.evidencePaths === undefined || Array.isArray(expected.evidencePaths),
+        `Fixture ${fixtureName} expected-result.json evidencePaths must be an array when present`,
       );
 
       const readmeContent = fs.readFileSync(readmePath, "utf8");
       const readmeWords = readmeContent.trim().split(/\s+/).filter(Boolean);
       assert.ok(
         readmeWords.length >= 5,
-        `README.md lacks context in ${fixturePath}: Must explicitly mention the rule or scenario it covers (minimum 5 words).`
+        `Fixture ${fixtureName} README.md should mention the covered rule or scenario`,
       );
     }
   }
